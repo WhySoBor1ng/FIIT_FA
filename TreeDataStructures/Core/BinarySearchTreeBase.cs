@@ -379,23 +379,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         }
 
         private static List<TreeEntry<TKey, TValue>> BuildEntries(TNode? root, TraversalStrategy strategy)
-        {
-            TraversalStrategy baseStrategy = strategy switch
-            {
-                TraversalStrategy.InOrderReverse => TraversalStrategy.InOrder,
-                TraversalStrategy.PreOrderReverse => TraversalStrategy.PreOrder,
-                TraversalStrategy.PostOrderReverse => TraversalStrategy.PostOrder,
-                _ => strategy
-            };
-
-            TraversalResult result = Build(root, baseStrategy);
-            if (strategy is TraversalStrategy.InOrderReverse or TraversalStrategy.PreOrderReverse or TraversalStrategy.PostOrderReverse)
-            {
-                result.Entries.Reverse();
-            }
-
-            return result.Entries;
-        }
+            => Build(root, strategy).Entries;
 
         private static TraversalResult Build(TNode? node, TraversalStrategy strategy)
         {
@@ -416,11 +400,29 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
                 entries.AddRange(left.Entries);
                 entries.AddRange(right.Entries);
             }
+            else if (strategy == TraversalStrategy.PreOrderReverse)
+            {
+                entries.Add(entry);
+                entries.AddRange(right.Entries);
+                entries.AddRange(left.Entries);
+            }
             else if (strategy == TraversalStrategy.PostOrder)
             {
                 entries.AddRange(left.Entries);
                 entries.AddRange(right.Entries);
                 entries.Add(entry);
+            }
+            else if (strategy == TraversalStrategy.PostOrderReverse)
+            {
+                entries.AddRange(right.Entries);
+                entries.AddRange(left.Entries);
+                entries.Add(entry);
+            }
+            else if (strategy == TraversalStrategy.InOrderReverse)
+            {
+                entries.AddRange(right.Entries);
+                entries.Add(entry);
+                entries.AddRange(left.Entries);
             }
             else
             {
