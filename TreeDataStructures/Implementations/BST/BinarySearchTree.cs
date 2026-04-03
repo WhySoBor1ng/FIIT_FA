@@ -1,4 +1,4 @@
-﻿using TreeDataStructures.Core;
+using TreeDataStructures.Core;
 
 namespace TreeDataStructures.Implementations.BST;
 
@@ -6,17 +6,17 @@ public class BinarySearchTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue,
 {
     protected override BstNode<TKey, TValue> CreateNode(TKey key, TValue value)
     {
-        throw new NotImplementedException();
+        return new BstNode<TKey, TValue>(key, value);
     }
     
     protected override void OnNodeAdded(BstNode<TKey, TValue> newNode)
     {
-        throw new NotImplementedException();
+        return;
     }
     
     protected override void OnNodeRemoved(BstNode<TKey, TValue>? parent, BstNode<TKey, TValue>? child)
     {
-        throw new NotImplementedException();
+        return;
     }
     
 }
