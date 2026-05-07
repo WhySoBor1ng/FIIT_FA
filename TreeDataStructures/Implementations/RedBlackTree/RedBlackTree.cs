@@ -122,7 +122,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
     {
         return new RbNode<TKey, TValue>(key, value);
     }
-    
+
     protected override void OnNodeAdded(RbNode<TKey, TValue> newNode)
     {
         if (Root != null)
@@ -200,15 +200,21 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
     {
         while (!ReferenceEquals(node, Root) && ColorOf(node) == RbColor.Black)
         {
-            if (ReferenceEquals(node, parent?.Left))
+            if (parent == null)
             {
-                RbNode<TKey, TValue>? sibling = parent.Right;
+                break;
+            }
+
+            RbNode<TKey, TValue> currentParent = parent;
+            if (ReferenceEquals(node, currentParent.Left))
+            {
+                RbNode<TKey, TValue>? sibling = currentParent.Right;
                 if (ColorOf(sibling) == RbColor.Red)
                 {
                     sibling!.Color = RbColor.Black;
-                    parent.Color = RbColor.Red;
-                    RotateLeft(parent);
-                    sibling = parent.Right;
+                    currentParent.Color = RbColor.Red;
+                    RotateLeft(currentParent);
+                    sibling = currentParent.Right;
                 }
 
                 if (ColorOf(sibling?.Left) == RbColor.Black && ColorOf(sibling?.Right) == RbColor.Black)
@@ -218,7 +224,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
                         sibling.Color = RbColor.Red;
                     }
 
-                    node = parent;
+                    node = currentParent;
                     parent = node?.Parent;
                 }
                 else
@@ -236,34 +242,34 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
                             RotateRight(sibling);
                         }
 
-                        sibling = parent.Right;
+                        sibling = currentParent.Right;
                     }
 
                     if (sibling != null)
                     {
-                        sibling.Color = parent.Color;
+                        sibling.Color = currentParent.Color;
                     }
 
-                    parent.Color = RbColor.Black;
+                    currentParent.Color = RbColor.Black;
                     if (sibling?.Right != null)
                     {
                         sibling.Right.Color = RbColor.Black;
                     }
 
-                    RotateLeft(parent);
+                    RotateLeft(currentParent);
                     node = Root;
                     parent = null;
                 }
             }
             else
             {
-                RbNode<TKey, TValue>? sibling = parent?.Left;
+                RbNode<TKey, TValue>? sibling = currentParent.Left;
                 if (ColorOf(sibling) == RbColor.Red)
                 {
                     sibling!.Color = RbColor.Black;
-                    parent!.Color = RbColor.Red;
-                    RotateRight(parent);
-                    sibling = parent.Left;
+                    currentParent.Color = RbColor.Red;
+                    RotateRight(currentParent);
+                    sibling = currentParent.Left;
                 }
 
                 if (ColorOf(sibling?.Left) == RbColor.Black && ColorOf(sibling?.Right) == RbColor.Black)
@@ -273,7 +279,7 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
                         sibling.Color = RbColor.Red;
                     }
 
-                    node = parent;
+                    node = currentParent;
                     parent = node?.Parent;
                 }
                 else
@@ -291,21 +297,21 @@ public class RedBlackTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, RbN
                             RotateLeft(sibling);
                         }
 
-                        sibling = parent?.Left;
+                        sibling = currentParent.Left;
                     }
 
                     if (sibling != null)
                     {
-                        sibling.Color = parent!.Color;
+                        sibling.Color = currentParent.Color;
                     }
 
-                    parent!.Color = RbColor.Black;
+                    currentParent.Color = RbColor.Black;
                     if (sibling?.Left != null)
                     {
                         sibling.Left.Color = RbColor.Black;
                     }
 
-                    RotateRight(parent);
+                    RotateRight(currentParent);
                     node = Root;
                     parent = null;
                 }

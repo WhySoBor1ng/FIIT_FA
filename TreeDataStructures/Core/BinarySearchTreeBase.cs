@@ -4,21 +4,21 @@ using TreeDataStructures.Interfaces;
 
 namespace TreeDataStructures.Core;
 
-public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>? comparer = null) 
+public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>? comparer = null)
     : ITree<TKey, TValue>
     where TNode : Node<TKey, TValue, TNode>
 {
     protected TNode? Root;
-    public IComparer<TKey> Comparer { get; protected set; } = comparer ?? Comparer<TKey>.Default; // use it to compare Keys
+    public IComparer<TKey> Comparer { get; protected set; } = comparer ?? Comparer<TKey>.Default;
 
     public int Count { get; protected set; }
-    
+
     public bool IsReadOnly => false;
 
     public ICollection<TKey> Keys => InOrder().Select(entry => entry.Key).ToList();
     public ICollection<TValue> Values => InOrder().Select(entry => entry.Value).ToList();
-    
-    
+
+
     public virtual void Add(TKey key, TValue value)
     {
         if (Root == null)
@@ -59,18 +59,18 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         OnNodeAdded(newNode);
     }
 
-    
+
     public virtual bool Remove(TKey key)
     {
         TNode? node = FindNode(key);
         if (node == null) { return false; }
 
         RemoveNode(node);
-        this.Count--;
+        Count--;
         return true;
     }
-    
-    
+
+
     protected virtual void RemoveNode(TNode node)
     {
         if (node.Left == null)
@@ -127,7 +127,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
     }
 
     public virtual bool ContainsKey(TKey key) => FindNode(key) != null;
-    
+
     public virtual bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
     {
         TNode? node = FindNode(key);
@@ -146,29 +146,29 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         set => Add(key, value);
     }
 
-    
+
     #region Hooks
-    
+
     /// <summary>
     /// Вызывается после успешной вставки
     /// </summary>
     /// <param name="newNode">Узел, который встал на место</param>
     protected virtual void OnNodeAdded(TNode newNode) { }
-    
+
     /// <summary>
     /// Вызывается после удаления. 
     /// </summary>
     /// <param name="parent">Узел, чей ребенок изменился</param>
     /// <param name="child">Узел, который встал на место удаленного</param>
     protected virtual void OnNodeRemoved(TNode? parent, TNode? child) { }
-    
+
     #endregion
-    
-    
+
+
     #region Helpers
     protected abstract TNode CreateNode(TKey key, TValue value);
-    
-    
+
+
     protected TNode? FindNode(TKey key)
     {
         TNode? current = Root;
@@ -249,7 +249,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         x.Right = y;
         y.Parent = x;
     }
-    
+
     protected void RotateBigLeft(TNode x)
     {
         RotateLeft(x);
@@ -258,7 +258,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             RotateLeft(x.Parent);
         }
     }
-    
+
     protected void RotateBigRight(TNode y)
     {
         RotateRight(y);
@@ -267,7 +267,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             RotateRight(y.Parent);
         }
     }
-    
+
     protected void RotateDoubleLeft(TNode x)
     {
         if (x.Right != null)
@@ -276,7 +276,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         }
         RotateLeft(x);
     }
-    
+
     protected void RotateDoubleRight(TNode y)
     {
         if (y.Left != null)
@@ -285,7 +285,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         }
         RotateRight(y);
     }
-    
+
     protected void Transplant(TNode u, TNode? v)
     {
         if (u.Parent == null)
@@ -303,33 +303,27 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
         v?.Parent = u.Parent;
     }
     #endregion
-    
-    public IEnumerable<TreeEntry<TKey, TValue>>  InOrder() => new TreeIterator(Root, TraversalStrategy.InOrder);
-    
-    private IEnumerable<TreeEntry<TKey, TValue>>  InOrderTraversal(TNode? node)
-    {
-        return new TreeIterator(node, TraversalStrategy.InOrder);
-    }
-    
-    public IEnumerable<TreeEntry<TKey, TValue>>  PreOrder() => new TreeIterator(Root, TraversalStrategy.PreOrder);
-    public IEnumerable<TreeEntry<TKey, TValue>>  PostOrder() => new TreeIterator(Root, TraversalStrategy.PostOrder);
-    public IEnumerable<TreeEntry<TKey, TValue>>  InOrderReverse() => new TreeIterator(Root, TraversalStrategy.InOrderReverse);
-    public IEnumerable<TreeEntry<TKey, TValue>>  PreOrderReverse() => new TreeIterator(Root, TraversalStrategy.PreOrderReverse);
-    public IEnumerable<TreeEntry<TKey, TValue>>  PostOrderReverse() => new TreeIterator(Root, TraversalStrategy.PostOrderReverse);
-    
+
+    public IEnumerable<TreeEntry<TKey, TValue>> InOrder() => new TreeIterator(Root, TraversalStrategy.InOrder);
+    public IEnumerable<TreeEntry<TKey, TValue>> PreOrder() => new TreeIterator(Root, TraversalStrategy.PreOrder);
+    public IEnumerable<TreeEntry<TKey, TValue>> PostOrder() => new TreeIterator(Root, TraversalStrategy.PostOrder);
+    public IEnumerable<TreeEntry<TKey, TValue>> InOrderReverse() => new TreeIterator(Root, TraversalStrategy.InOrderReverse);
+    public IEnumerable<TreeEntry<TKey, TValue>> PreOrderReverse() => new TreeIterator(Root, TraversalStrategy.PreOrderReverse);
+    public IEnumerable<TreeEntry<TKey, TValue>> PostOrderReverse() => new TreeIterator(Root, TraversalStrategy.PostOrderReverse);
+
     /// <summary>
     /// Внутренний класс-итератор. 
     /// Реализует паттерн Iterator вручную, без yield return (ban).
     /// </summary>
-    private struct TreeIterator : 
+    private struct TreeIterator :
         IEnumerable<TreeEntry<TKey, TValue>>,
         IEnumerator<TreeEntry<TKey, TValue>>
     {
         private readonly TNode? _root;
-        private readonly TraversalStrategy _strategy; // or make it template parameter?
+        private readonly TraversalStrategy _strategy;
         private readonly List<TreeEntry<TKey, TValue>> _entries;
         private int _index;
-        
+
         public TreeIterator(TNode? root, TraversalStrategy strategy)
         {
             _root = root;
@@ -337,10 +331,10 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             _entries = BuildEntries(root, strategy);
             _index = -1;
         }
-        
+
         public IEnumerator<TreeEntry<TKey, TValue>> GetEnumerator() => new TreeIterator(_root, _strategy);
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-        
+
         public TreeEntry<TKey, TValue> Current
         {
             get
@@ -354,8 +348,8 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             }
         }
         object IEnumerator.Current => Current;
-        
-        
+
+
         public bool MoveNext()
         {
             if (_index + 1 >= _entries.Count)
@@ -366,13 +360,13 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             _index++;
             return true;
         }
-        
+
         public void Reset()
         {
             _index = -1;
         }
 
-        
+
         public void Dispose()
         {
             // TODO release managed resources here
@@ -436,10 +430,10 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
 
         private readonly record struct TraversalResult(List<TreeEntry<TKey, TValue>> Entries, int Height);
     }
-    
-    
+
+
     private enum TraversalStrategy { InOrder, PreOrder, PostOrder, InOrderReverse, PreOrderReverse, PostOrderReverse }
-    
+
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
         return InOrder()
@@ -447,7 +441,7 @@ public abstract class BinarySearchTreeBase<TKey, TValue, TNode>(IComparer<TKey>?
             .ToList()
             .GetEnumerator();
     }
-    
+
     IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
 
