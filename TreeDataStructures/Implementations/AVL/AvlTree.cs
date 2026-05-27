@@ -5,217 +5,72 @@ namespace TreeDataStructures.Implementations.AVL;
 public class AvlTree<TKey, TValue> : BinarySearchTreeBase<TKey, TValue, AvlNode<TKey, TValue>>
     where TKey : IComparable<TKey>
 {
-    public override void Add(TKey key, TValue value)
-    {
-        bool added = false;
-        Root = Insert(Root, key, value, null, ref added);
-        if (Root != null)
-        {
-            Root.Parent = null;
-        }
-
-        if (added)
-        {
-            Count++;
-        }
-    }
-
-    public override bool Remove(TKey key)
-    {
-        bool removed = false;
-        Root = Remove(Root, key, ref removed);
-        if (Root != null)
-        {
-            Root.Parent = null;
-        }
-
-        if (removed)
-        {
-            Count--;
-        }
-
-        return removed;
-    }
-
     protected override AvlNode<TKey, TValue> CreateNode(TKey key, TValue value)
         => new(key, value);
-    
+
     protected override void OnNodeAdded(AvlNode<TKey, TValue> newNode)
     {
-        return;
+        RebalanceUpwards(newNode.Parent);
     }
 
-    private AvlNode<TKey, TValue> Insert(AvlNode<TKey, TValue>? node, TKey key, TValue value, AvlNode<TKey, TValue>? parent, ref bool added)
+    protected override void OnNodeRemoved(AvlNode<TKey, TValue>? parent, AvlNode<TKey, TValue>? child)
     {
-        if (node == null)
-        {
-            added = true;
-            AvlNode<TKey, TValue> newNode = CreateNode(key, value);
-            newNode.Parent = parent;
-            return newNode;
-        }
-
-        int cmp = Comparer.Compare(key, node.Key);
-        if (cmp < 0)
-        {
-            node.Left = Insert(node.Left, key, value, node, ref added);
-        }
-        else if (cmp > 0)
-        {
-            node.Right = Insert(node.Right, key, value, node, ref added);
-        }
-        else
-        {
-            node.Value = value;
-            return node;
-        }
-
-        UpdateHeight(node);
-        return Balance(node);
+        RebalanceUpwards(parent ?? child);
     }
 
-    private AvlNode<TKey, TValue>? Remove(AvlNode<TKey, TValue>? node, TKey key, ref bool removed)
+    private void RebalanceUpwards(AvlNode<TKey, TValue>? node)
     {
-        if (node == null)
+        while (node != null)
         {
-            return null;
-        }
+            UpdateHeight(node);
+            int balanceFactor = BalanceFactor(node);
 
-        int cmp = Comparer.Compare(key, node.Key);
-        if (cmp < 0)
-        {
-            node.Left = Remove(node.Left, key, ref removed);
-            if (node.Left != null)
+            if (balanceFactor > 1)
             {
-                node.Left.Parent = node;
-            }
-        }
-        else if (cmp > 0)
-        {
-            node.Right = Remove(node.Right, key, ref removed);
-            if (node.Right != null)
-            {
-                node.Right.Parent = node;
-            }
-        }
-        else
-        {
-            removed = true;
-            if (node.Left == null)
-            {
-                if (node.Right != null)
+                if (node.Left != null && BalanceFactor(node.Left) < 0)
                 {
-                    node.Right.Parent = node.Parent;
+                    RotateLeftAvl(node.Left);
                 }
-
-                return node.Right;
+                RotateRightAvl(node);
             }
-
-            if (node.Right == null)
+            else if (balanceFactor < -1)
             {
-                node.Left.Parent = node.Parent;
-                return node.Left;
+                if (node.Right != null && BalanceFactor(node.Right) > 0)
+                {
+                    RotateRightAvl(node.Right);
+                }
+                RotateLeftAvl(node);
             }
 
-            AvlNode<TKey, TValue> successor = FindMin(node.Right);
-            node.Key = successor.Key;
-            node.Value = successor.Value;
-            node.Right = Remove(node.Right, successor.Key, ref removed);
-            if (node.Right != null)
-            {
-                node.Right.Parent = node;
-            }
+            node = node.Parent;
         }
-
-        UpdateHeight(node);
-        return Balance(node);
     }
 
-    private AvlNode<TKey, TValue> Balance(AvlNode<TKey, TValue> node)
-    {
-        int balanceFactor = GetHeight(node.Left) - GetHeight(node.Right);
-        if (balanceFactor > 1)
-        {
-            if (GetHeight(node.Left!.Left) < GetHeight(node.Left.Right))
-            {
-                node.Left = RotateLeftLocal(node.Left);
-                if (node.Left != null)
-                {
-                    node.Left.Parent = node;
-                }
-            }
-
-            return RotateRightLocal(node);
-        }
-
-        if (balanceFactor < -1)
-        {
-            if (GetHeight(node.Right!.Right) < GetHeight(node.Right.Left))
-            {
-                node.Right = RotateRightLocal(node.Right);
-                if (node.Right != null)
-                {
-                    node.Right.Parent = node;
-                }
-            }
-
-            return RotateLeftLocal(node);
-        }
-
-        return node;
-    }
-
-    private static int GetHeight(AvlNode<TKey, TValue>? node) => node?.Height ?? 0;
+    private static int HeightOf(AvlNode<TKey, TValue>? node) => node?.Height ?? 0;
 
     private static void UpdateHeight(AvlNode<TKey, TValue> node)
-        => node.Height = Math.Max(GetHeight(node.Left), GetHeight(node.Right)) + 1;
-
-    private static AvlNode<TKey, TValue> FindMin(AvlNode<TKey, TValue> node)
     {
-        AvlNode<TKey, TValue> current = node;
-        while (current.Left != null)
-        {
-            current = current.Left;
-        }
-
-        return current;
+        int leftHeight = HeightOf(node.Left);
+        int rightHeight = HeightOf(node.Right);
+        node.Height = (leftHeight > rightHeight ? leftHeight : rightHeight) + 1;
     }
 
-    private AvlNode<TKey, TValue> RotateLeftLocal(AvlNode<TKey, TValue> node)
+    private static int BalanceFactor(AvlNode<TKey, TValue> node) => HeightOf(node.Left) - HeightOf(node.Right);
+
+    private void RotateLeftAvl(AvlNode<TKey, TValue> pivotNode)
     {
-        AvlNode<TKey, TValue> pivot = node.Right!;
-        node.Right = pivot.Left;
-        if (node.Right != null)
-        {
-            node.Right.Parent = node;
-        }
-
-        pivot.Left = node;
-        pivot.Parent = node.Parent;
-        node.Parent = pivot;
-
-        UpdateHeight(node);
-        UpdateHeight(pivot);
-        return pivot;
+        var newParentNode = pivotNode.Right;
+        RotateLeft(pivotNode);
+        UpdateHeight(pivotNode);
+        if (newParentNode != null) { UpdateHeight(newParentNode); }
     }
 
-    private AvlNode<TKey, TValue> RotateRightLocal(AvlNode<TKey, TValue> node)
+    private void RotateRightAvl(AvlNode<TKey, TValue> pivotNode)
     {
-        AvlNode<TKey, TValue> pivot = node.Left!;
-        node.Left = pivot.Right;
-        if (node.Left != null)
-        {
-            node.Left.Parent = node;
-        }
-
-        pivot.Right = node;
-        pivot.Parent = node.Parent;
-        node.Parent = pivot;
-
-        UpdateHeight(node);
-        UpdateHeight(pivot);
-        return pivot;
+        var newParentNode = pivotNode.Left;
+        RotateRight(pivotNode);
+        UpdateHeight(pivotNode);
+        if (newParentNode != null) { UpdateHeight(newParentNode); }
     }
 
-    
 }
